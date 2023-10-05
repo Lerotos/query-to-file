@@ -7,7 +7,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileOutputStream;
 import java.sql.*;
-import java.util.Objects;
 
 public class Query {
 
@@ -21,25 +20,14 @@ public class Query {
         try{
             XSSFWorkbook workbook = new XSSFWorkbook();
             XSSFSheet spreadsheet = workbook.createSheet("output");
-            XSSFRow row;
-            int rowid = 0;
 
             Connection con = testCon(db, user, pass);
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(query);
             ResultSetMetaData rsmd = rs.getMetaData();
-            while(rs.next()){
-                row = spreadsheet.createRow(rowid++);
-                int cellid = 0;
-                while(rsmd.getColumnCount() > cellid){
 
-                    Cell cell = row.createCell(cellid++);
-
-                    inputCell(rsmd, cell, cellid, rs);
-
-
-                }
-            }
+            generateHeader(spreadsheet, rsmd);
+            generateCells(rs, spreadsheet, rsmd);
 
             FileOutputStream out = new FileOutputStream(path);
             workbook.write(out);
@@ -48,18 +36,48 @@ public class Query {
         } catch(Exception e){MainWindow.exceptionWindow(e);}
     }
 
+    //extracts and writes the column headers
+    public static void generateHeader(XSSFSheet spreadsheet, ResultSetMetaData rsmd) throws SQLException {
+        XSSFRow row = spreadsheet.createRow(0);
+        int cellId = 0;
+        while(rsmd.getColumnCount() > cellId){
+            Cell cell = row.createCell(cellId++);
+            cell.setCellValue(rsmd.getColumnLabel(cellId));
+        }
+    }
+
+    //extracts and writes the cell data
+    public static void generateCells(ResultSet rs, XSSFSheet spreadsheet, ResultSetMetaData rsmd) throws SQLException {
+        int rowId = 1;
+        while(rs.next()){
+            XSSFRow row = spreadsheet.createRow(rowId++);
+            int cellId = 0;
+            while(rsmd.getColumnCount() > cellId){
+                Cell cell = row.createCell(cellId++);
+                inputCell(rsmd, cell, cellId, rs);
+            }
+        }
+    }
+
     //sets the appropriate Excel cell type
     public static void inputCell(ResultSetMetaData rsmd, Cell cell, int cellId, ResultSet rs) throws SQLException {
-        if(Objects.equals(rsmd.getColumnClassName(cellId), "java.lang.Integer")){
-            cell.setCellValue(rs.getInt(cellId));
-        } else if (Objects.equals(rsmd.getColumnClassName(cellId), "java.lang.Timestamp")) {
-            cell.setCellValue(rs.getTimestamp(cellId));
-        } else if (Objects.equals(rsmd.getColumnClassName(cellId), "java.lang.Time")) {
-            cell.setCellValue(rs.getTime(cellId));
-        } else if (Objects.equals(rsmd.getColumnClassName(cellId), "java.lang.Date")) {
-            cell.setCellValue(rs.getDate(cellId));
-        } else{
-            cell.setCellValue(rs.getString(cellId));
+        String className = rsmd.getColumnClassName(cellId);
+        switch (className){
+            case "java.lang.Integer":
+                cell.setCellValue(rs.getInt(cellId));
+                break;
+            case "java.lang.Timestamp":
+                cell.setCellValue(rs.getTimestamp(cellId));
+                break;
+            case "java.lang.Time":
+                cell.setCellValue(rs.getTime(cellId));
+                break;
+            case "java.lang.Date":
+                cell.setCellValue(rs.getDate(cellId));
+                break;
+            default:
+                cell.setCellValue(rs.getString(cellId));
+                break;
         }
     }
 }

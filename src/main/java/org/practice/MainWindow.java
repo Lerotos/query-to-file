@@ -28,10 +28,10 @@ public class MainWindow {
         JButton confirmUser = new JButton("Confirm User");
         JTextField userPass = new JPasswordField("Enter User Password",40);
         JButton confirmPass = new JButton("Confirm Password");
-        JTextField outputPath = new JTextField("Enter Output Path",40);
+        JTextField outputPath = new JTextField("Enter Output Path (Example: ./output.xlsx)",40);
         JButton confirmPath = new JButton("Confirm Path");
-        JButton confirmQuery = new JButton("Confirm Query");
         JTextArea queryArea = new JTextArea("Enter Query", 20, 60);
+        JButton confirmQuery = new JButton("Confirm Query");
 
         //disable most of them
         user.setEnabled(false);
@@ -74,6 +74,7 @@ public class MainWindow {
             confirmQuery.setEnabled(true);
         });
 
+        //additionally runs the query and generated the output
         confirmQuery.addActionListener(e -> {
             query = queryArea.getText();
             Query.query(path, query, connection, userName, userPassword);
